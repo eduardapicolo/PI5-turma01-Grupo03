@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aumigos do Coração 🐶</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-container">
+
+    <header class="top-bar">
+        <img src="LOGO_PIV.png" alt="Logo Aumigos do Coração" class="logo-img">
+    </header>
+
+    <div class="cards-container" id="cards-container"></div>
+
+    <div class="actions">
+        <button class="btn nope" id="btn-nope">✖</button>
+        <button class="btn like" id="btn-like">❤</button>
+    </div>
+
+    <nav class="bottom-nav">
+        <span onclick="abrirFavoritos()">❤</span>
+        <span onclick="abrirChat()">💬</span>
+        <span onclick="abrirPerfil()">👤</span>
+    </nav>
+
+
+    <div class="favorites-screen" id="favorites-screen">
+        <div class="fav-header">
+            <h2>Seus Aumigos 🐾</h2>
+            <button onclick="fecharFavoritos()">✖</button>
+        </div>
+        <div class="fav-list" id="fav-list">
+            </div>
+    </div>
+
+    <div class="chat-screen" id="chat-screen">
+        <div class="chat-header">
+            <h2>Mensagens 💬</h2>
+            <button onclick="fecharChat()">✖</button>
+        </div>
+        <div class="chat-list" id="chat-list">
+            </div>
+    </div>
+
+    <div class="profile-screen" id="profile-screen">
+        <div class="profile-header">
+            <button onclick="fecharPerfil()">✖</button>
+        </div>
+        
+        <div class="profile-content">
+            <div class="profile-photo">
+                <img src="https://www.w3schools.com/howto/img_avatar.png" alt="Sua foto">
+                <div class="edit-badge">✏️</div>
+            </div>
+            <h2 class="user-name">Seu Nome Aqui</h2>
+            <p class="user-bio">Apaixonado por animais e em busca de um novo melhor amigo.</p>
+            
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <span id="match-count">0</span>
+                    <p>Matches</p>
+                </div>
+                <div class="stat-item">
+                    <span>Campinas, SP</span>
+                    <p>Localização</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="match-screen" id="match-screen">
+        <h1 class="match-title">Deu Match! 🐶💖</h1>
+        <p class="match-subtitle">Você curtiu um aumigo!</p>
+        
+        <div class="ong-card">
+            <p id="ong-nome"></p>
+            <p id="ong-telefone"></p>
+        </div>
+
+        <button class="btn-match" onclick="fecharMatch()">Continuar Deslizando</button>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
