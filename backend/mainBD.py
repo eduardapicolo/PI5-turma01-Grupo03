@@ -6,8 +6,9 @@ cats_col = db['cats']
 dogs_col = db['dogs']
 users_col = db['users']
 interactions_col = db['interactions']
+pets_col = db['pets']
 
-#users
+#users teste para ver se esta funcionando a conexão
 def cadastrar_usuario(nome, preferencia, localizacao):
     novo_usuario = {
         "nome": nome,
