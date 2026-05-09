@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
   # aumigos_V1
 
@@ -9,3 +10,6 @@
 
   Run `npm run dev` to start the development server.
   
+=======
+# PI5-turma01-Grupo03
+>>>>>>> 737ea8f067398434abfedf26b1970be5b8e6235f
