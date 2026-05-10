@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router";
 import { Header } from "../components/Header";
 import { Upload, ArrowLeft, Save } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -18,37 +18,71 @@ const IDADES = [
   "6 ou mais anos",
 ];
 
-export function OngAddPetPage() {
-  const navigate = useNavigate();
-  const { token } = useAuth();
+const EMPTY_FORM = {
+  nome:                       "",
+  tipo_animal:                "",
+  raca:                       "",
+  porte:                      "",
+  idade_display:              "",
+  sexo:                       "",
+  pelagem:                    "",
+  descricao:                  "",
+  castrado:                   false,
+  vacinado:                   false,
+  vermifugado:                false,
+  precisa_cuidados_especiais: false,
+  sociavel_criancas:          false,
+  sociavel_animais:           false,
+  aceita_apartamento:         false,
+  aceita_casa_quintal:        false,
+  disponibilidade:            "Disponível",
+};
 
-  const [formData, setFormData] = useState({
-    nome:                      "",
-    tipo_animal:               "",
-    raca:                      "",
-    porte:                     "",
-    idade_display:             "",
-    sexo:                      "",
-    pelagem:                   "",
-    descricao:                 "",
-    // saúde
-    castrado:                  false,
-    vacinado:                  false,
-    vermifugado:               false,
-    precisa_cuidados_especiais: false,
-    // sociabilidade
-    sociavel_criancas: false,
-    sociavel_animais:  false,
-    // ambiente
-    aceita_apartamento:  false,
-    aceita_casa_quintal: false,
-    disponibilidade:     "Disponível",
-  });
+export function OngEditPetPage() {
+  const navigate      = useNavigate();
+  const { id }        = useParams<{ id: string }>();
+  const { token }     = useAuth();
 
-  const [foto, setFoto]           = useState<File | null>(null);
-  const [preview, setPreview]     = useState<string | null>(null);
+  const [formData, setFormData] = useState({ ...EMPTY_FORM });
+  const [foto, setFoto]         = useState<File | null>(null);
+  const [preview, setPreview]   = useState<string | null>(null);
+  const [fetching, setFetching] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError]         = useState<string | null>(null);
+  const [error, setError]       = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id || !token) return;
+    fetch(`${API_URL}/pets/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        const pet = d.data ?? d;
+        setFormData({
+          nome:                       pet.nome               ?? "",
+          tipo_animal:                pet.tipo_animal        ?? "",
+          raca:                       pet.raca               ?? "",
+          porte:                      pet.porte              ?? "",
+          idade_display:              pet.idade_display      ?? "",
+          sexo:                       pet.sexo               ?? "",
+          pelagem:                    pet.pelagem            ?? "",
+          descricao:                  pet.descricao          ?? "",
+          castrado:                   !!pet.castrado,
+          vacinado:                   !!pet.vacinado,
+          vermifugado:                !!pet.vermifugado,
+          precisa_cuidados_especiais: !!pet.precisa_cuidados_especiais,
+          sociavel_criancas:          !!pet.sociavel_criancas,
+          sociavel_animais:           !!pet.sociavel_animais,
+          aceita_apartamento:         !!pet.aceita_apartamento,
+          aceita_casa_quintal:        !!pet.aceita_casa_quintal,
+          disponibilidade:            pet.disponibilidade    ?? "Disponível",
+        });
+        const img = pet.imagem_principal || pet.imagem || pet.fotos?.[0] || null;
+        if (img) setPreview(img);
+      })
+      .catch(() => setError("Não foi possível carregar os dados do animal."))
+      .finally(() => setFetching(false));
+  }, [id, token]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,23 +100,20 @@ export function OngAddPetPage() {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
-
     try {
       const body = new FormData();
-      Object.entries(formData).forEach(([k, v]) => {
-        body.append(k, String(v));
-      });
+      Object.entries(formData).forEach(([k, v]) => body.append(k, String(v)));
       if (foto) body.append("foto", foto);
 
-      const res = await fetch(`${API_URL}/pets`, {
-        method: "POST",
+      const res = await fetch(`${API_URL}/pets/${id}`, {
+        method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
         body,
       });
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Falha ao salvar pet");
+        throw new Error(err.error || "Falha ao atualizar pet");
       }
 
       navigate("/ong/animais");
@@ -130,6 +161,17 @@ export function OngAddPetPage() {
     </label>
   );
 
+  if (fetching) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-ong-bg to-white">
+        <Header variant="ong" />
+        <div className="container mx-auto px-6 py-20 flex justify-center">
+          <div className="w-10 h-10 rounded-full border-4 border-secondary border-t-transparent animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-ong-bg to-white">
       <Header variant="ong" />
@@ -144,8 +186,8 @@ export function OngAddPetPage() {
         </button>
 
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Adicionar Novo Animal</h1>
-          <p className="text-lg text-muted-foreground">Preencha as informações do pet para adoção</p>
+          <h1 className="text-4xl font-bold mb-2">Editar Animal</h1>
+          <p className="text-lg text-muted-foreground">Atualize as informações do pet</p>
         </div>
 
         {error && (
@@ -283,7 +325,7 @@ export function OngAddPetPage() {
               className="flex-1 px-8 py-4 bg-gradient-to-r from-secondary to-orange-600 text-white rounded-2xl font-semibold hover:scale-105 transition-transform shadow-lg flex items-center justify-center gap-2 disabled:opacity-60 disabled:hover:scale-100"
             >
               <Save className="w-5 h-5" />
-              {isLoading ? "Salvando..." : "Salvar Animal"}
+              {isLoading ? "Salvando..." : "Salvar Alterações"}
             </button>
           </div>
         </form>

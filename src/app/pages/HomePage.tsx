@@ -1,12 +1,8 @@
 import { ArrowRight, Heart, Search, Sparkles, Users } from "lucide-react";
 import { Link } from "react-router";
 import { Header } from "../components/Header";
-import { PetCard } from "../components/PetCard";
-import { mockPets } from "../data/mockPets";
 
 export function HomePage() {
-  const featuredPets = mockPets.slice(0, 3);
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-adopter-bg">
       <Header variant="public" />
@@ -24,21 +20,13 @@ export function HomePage() {
           <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
             Conectamos você com pets que combinam com seu estilo de vida através de tecnologia inteligente e muito amor.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/login"
-              className="px-8 py-4 bg-primary text-primary-foreground rounded-full font-semibold text-lg hover:scale-105 transition-transform shadow-lg flex items-center justify-center gap-2"
-            >
-              Começar Agora
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-            <a
-              href="#como-funciona"
-              className="px-8 py-4 bg-white border-2 border-primary text-primary rounded-full font-semibold text-lg hover:scale-105 transition-transform"
-            >
-              Como Funciona
-            </a>
-          </div>
+          <Link
+            to="/login"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-full font-semibold text-lg hover:scale-105 transition-transform shadow-lg"
+          >
+            Começar Agora
+            <ArrowRight className="w-5 h-5" />
+          </Link>
         </div>
       </section>
 
@@ -79,31 +67,9 @@ export function HomePage() {
         </div>
       </section>
 
-      <section id="destaques" className="bg-white py-20">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4 text-foreground">Pets em Destaque</h2>
-            <p className="text-lg text-muted-foreground">Conheça alguns dos pets esperando por um lar</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {featuredPets.map((pet) => (
-              <PetCard key={pet.id} pet={pet} compact showMatch />
-            ))}
-          </div>
-          <div className="text-center mt-12">
-            <Link
-              to="/login"
-              className="inline-block px-8 py-4 bg-primary text-primary-foreground rounded-full font-semibold text-lg hover:scale-105 transition-transform"
-            >
-              Ver Todos os Pets
-            </Link>
-          </div>
-        </div>
-      </section>
-
       <footer className="bg-foreground text-white py-12">
         <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
             <div>
               <h4 className="font-semibold mb-4">PetMatch</h4>
               <p className="text-sm text-gray-400">Conectando pets e pessoas através da tecnologia e amor.</p>
@@ -111,7 +77,6 @@ export function HomePage() {
             <div>
               <h4 className="font-semibold mb-4">Links Úteis</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#como-funciona" className="hover:text-white transition-colors">Como Funciona</a></li>
                 <li><Link to="/login" className="hover:text-white transition-colors">Para ONGs</Link></li>
                 <li><a href="#" className="hover:text-white transition-colors">Sobre Nós</a></li>
               </ul>
@@ -121,13 +86,6 @@ export function HomePage() {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><a href="#" className="hover:text-white transition-colors">Política de Privacidade</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Termos de Uso</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Contato</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li>contato@petmatch.com</li>
-                <li>(11) 99999-9999</li>
               </ul>
             </div>
           </div>

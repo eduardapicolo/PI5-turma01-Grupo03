@@ -1,92 +1,128 @@
-import { Heart, MapPin } from "lucide-react";
+import { ExternalLink, MapPin } from "lucide-react";
 
-export interface Pet {
-  id: string;
-  name: string;
-  age: string;
-  species: string;
-  breed?: string;
-  size: string;
-  gender: string;
-  image: string;
-  bio: string;
-  location: string;
-  matchPercentage?: number;
-  ongName: string;
-  temperament: string[];
-  vaccinated: boolean;
-  neutered: boolean;
+export interface ApiPet {
+  _id: string;
+  nome: string;
+  tipo_animal: string;
+  raca?: string;
+  porte: string;
+  idade_display: string;
+  sexo: string;
+  pelagem?: string;
+  descricao?: string;
+  imagem?: string;
+  imagem_principal?: string;
+  fotos?: string[];
+  url?: string;
+  localizacao?: string;
+  disponibilidade: string;
+  sociavel_criancas?: boolean;
+  sociavel_animais?: boolean;
 }
 
 interface PetCardProps {
-  pet: Pet;
-  showMatch?: boolean;
-  compact?: boolean;
+  pet: ApiPet;
   onClick?: () => void;
 }
 
-export function PetCard({ pet, showMatch = false, compact = false, onClick }: PetCardProps) {
-  if (compact) {
-    return (
-      <div
-        onClick={onClick}
-        className="bg-card rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group"
-      >
-        <div className="relative aspect-square overflow-hidden">
-          <img
-            src={pet.image}
-            alt={pet.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-          {showMatch && pet.matchPercentage && (
-            <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-4 py-2 rounded-full flex items-center gap-2">
-              <Heart className="w-4 h-4 fill-current" />
-              <span className="font-semibold">{pet.matchPercentage}%</span>
-            </div>
-          )}
-        </div>
-        <div className="p-5">
-          <div className="flex items-start justify-between mb-2">
-            <div>
-              <h3 className="font-semibold text-lg text-foreground">{pet.name}</h3>
-              <p className="text-sm text-muted-foreground">{pet.age} • {pet.breed || pet.species}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <MapPin className="w-4 h-4" />
-            <span>{pet.location}</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+function getPetImage(pet: ApiPet): string | null {
+  return pet.imagem_principal || pet.imagem || pet.fotos?.[0] || null;
+}
+
+function PetPlaceholder({ tipo }: { tipo: string }) {
+  return (
+    <div className="w-full h-full bg-gradient-to-br from-primary/10 to-purple-100 flex items-center justify-center text-6xl select-none">
+      {tipo?.toLowerCase() === "gato" ? "🐱" : "🐶"}
+    </div>
+  );
+}
+
+export function PetCard({ pet, onClick }: PetCardProps) {
+  const img = getPetImage(pet);
+  const adocaoUrl = pet.url;
 
   return (
     <div
       onClick={onClick}
-      className="bg-card rounded-3xl overflow-hidden shadow-2xl max-w-md w-full cursor-pointer"
+      className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 group cursor-pointer flex flex-col"
     >
-      <div className="relative aspect-[3/4] overflow-hidden">
-        <img
-          src={pet.image}
-          alt={pet.name}
-          className="w-full h-full object-cover"
-        />
-        {showMatch && pet.matchPercentage && (
-          <div className="absolute top-6 right-6 bg-primary text-primary-foreground px-6 py-3 rounded-full flex items-center gap-2 shadow-lg">
-            <Heart className="w-5 h-5 fill-current" />
-            <span className="font-semibold text-lg">{pet.matchPercentage}% Match</span>
+      {/* Imagem */}
+      <div className="relative w-full aspect-square overflow-hidden bg-muted flex-shrink-0">
+        {img ? (
+          <img
+            src={img}
+            alt={pet.nome}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+              (e.currentTarget.nextElementSibling as HTMLElement).style.display = "flex";
+            }}
+          />
+        ) : null}
+        <div
+          className="w-full h-full"
+          style={{ display: img ? "none" : "flex" }}
+        >
+          <PetPlaceholder tipo={pet.tipo_animal} />
+        </div>
+
+        {/* Badge disponibilidade */}
+        {pet.disponibilidade !== "Disponível" && (
+          <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
+            {pet.disponibilidade}
           </div>
         )}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-6 text-white">
-          <h2 className="text-3xl font-bold mb-2">{pet.name}, {pet.age}</h2>
-          <p className="text-lg mb-3 opacity-90">{pet.breed || pet.species} • {pet.gender === 'M' ? 'Macho' : 'Fêmea'}</p>
-          <p className="text-sm mb-3 line-clamp-2 opacity-80">{pet.bio}</p>
-          <div className="flex items-center gap-2 text-sm">
-            <MapPin className="w-4 h-4" />
-            <span>{pet.location}</span>
-          </div>
+      </div>
+
+      {/* Conteúdo */}
+      <div className="p-4 flex flex-col gap-2 flex-1">
+        <div>
+          <h3 className="font-bold text-lg text-foreground leading-tight truncate">
+            {pet.nome}
+          </h3>
+          <p className="text-sm text-muted-foreground truncate">
+            {pet.raca || pet.tipo_animal} · {pet.porte} · {pet.sexo}
+          </p>
         </div>
+
+        <p className="text-sm text-muted-foreground">{pet.idade_display}</p>
+
+        {pet.localizacao && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">{pet.localizacao}</span>
+          </div>
+        )}
+
+        {/* Tags sociabilidade */}
+        {(pet.sociavel_criancas || pet.sociavel_animais) && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {pet.sociavel_criancas && (
+              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                👶 Crianças
+              </span>
+            )}
+            {pet.sociavel_animais && (
+              <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
+                🐾 Animais
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Botão de adoção */}
+        {adocaoUrl && (
+          <a
+            href={adocaoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="mt-auto pt-3 flex items-center justify-center gap-2 w-full py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
+          >
+            Quero Adotar
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        )}
       </div>
     </div>
   );

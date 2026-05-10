@@ -1,17 +1,115 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { Header } from "../components/Header";
-import { PawPrint } from "lucide-react";
+import { PawPrint, Loader2, ArrowLeft } from "lucide-react";
+import { useAuth, QuestionnaireAnswers } from "../context/AuthContext";
+import { Link } from "react-router";
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: object) => void;
+          renderButton: (element: HTMLElement, config: object) => void;
+        };
+      };
+    };
+  }
+}
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+
+async function fetchRecomendacoes(answers: QuestionnaireAnswers, token: string) {
+  const res = await fetch(`${API_URL}/recomendacao`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ ...answers, topN: 20 }),
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.recomendacoes ?? null;
+}
 
 export function LoginPage() {
-  const [userType, setUserType] = useState<'adopter' | 'ong'>('adopter');
-  const navigate = useNavigate();
+  const [userType, setUserType] = useState<"adopter" | "ong">("adopter");
+  const [error, setError]       = useState<string | null>(null);
+  const [loading, setLoading]   = useState(false);
+  const { loginWithGoogle }     = useAuth();
+  const navigate                = useNavigate();
+  // Força re-render do botão Google após erro
+  const [btnKey, setBtnKey]     = useState(0);
+  const handleCredentialRef     = useRef<(r: { credential: string }) => void>();
 
-  const handleGoogleLogin = () => {
-    if (userType === 'adopter') {
-      navigate('/questionario');
-    } else {
-      navigate('/ong');
+  useEffect(() => {
+    handleCredentialRef.current = handleCredential;
+  });
+
+  useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+      "987417699236-lnfnbap1sdtlltjm0dqdbmrgr7mu2aba.apps.googleusercontent.com";
+
+    const init = () => {
+      window.google?.accounts.id.initialize({
+        client_id: clientId,
+        callback: (r: { credential: string }) => handleCredentialRef.current?.(r),
+      });
+      const btn = document.getElementById("google-btn-container");
+      if (btn) {
+        btn.innerHTML = "";
+        window.google?.accounts.id.renderButton(btn, {
+          theme: "outline", size: "large", width: "100%",
+          text: "signin_with", logo_alignment: "left",
+        });
+      }
+    };
+
+    if (window.google) { init(); }
+    else {
+      const s = document.createElement("script");
+      s.src = "https://accounts.google.com/gsi/client";
+      s.async = true;
+      s.onload = init;
+      document.body.appendChild(s);
+    }
+  }, [userType, btnKey]);
+
+  const handleCredential = async (response: { credential: string }) => {
+    setError(null);
+    setLoading(true);
+    try {
+      const loggedUser = await loginWithGoogle(
+        response.credential,
+        userType === "ong" ? "ong" : "user"
+      );
+
+      if (loggedUser.role === "ong" || loggedUser.role === "admin") {
+        navigate("/ong", { replace: true });
+        return;
+      }
+
+      if (loggedUser.lastQuestionnaireAnswers?.tipo) {
+        const storedToken = localStorage.getItem("petmatch_token") || "";
+        const recs = await fetchRecomendacoes(
+          loggedUser.lastQuestionnaireAnswers,
+          storedToken
+        );
+        navigate("/matches", {
+          replace: true,
+          state: { recomendacoes: recs, tipo: loggedUser.lastQuestionnaireAnswers.tipo },
+        });
+      } else {
+        navigate("/questionario", { replace: true });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao fazer login");
+      // Re-renderiza o botão do Google (foi consumido pelo SDK após o clique)
+      setBtnKey((k) => k + 1);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -25,27 +123,35 @@ export function LoginPage() {
             <div className="bg-primary text-primary-foreground w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <PawPrint className="w-8 h-8" />
             </div>
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-muted hover:bg-muted/80 text-foreground font-medium text-sm transition-colors mb-4"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Voltar para o início
+            </Link>
             <h1 className="text-3xl font-bold mb-2">Bem-vindo!</h1>
             <p className="text-muted-foreground">Entre para encontrar seu pet ideal</p>
           </div>
 
+          {/* Selector adotante / ONG */}
           <div className="flex gap-2 mb-8 bg-muted p-1 rounded-2xl">
             <button
-              onClick={() => setUserType('adopter')}
+              onClick={() => { setUserType("adopter"); setError(null); }}
               className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
-                userType === 'adopter'
-                  ? 'bg-primary text-primary-foreground shadow-md'
-                  : 'text-muted-foreground hover:text-foreground'
+                userType === "adopter"
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Sou Adotante
             </button>
             <button
-              onClick={() => setUserType('ong')}
+              onClick={() => { setUserType("ong"); setError(null); }}
               className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
-                userType === 'ong'
-                  ? 'bg-secondary text-secondary-foreground shadow-md'
-                  : 'text-muted-foreground hover:text-foreground'
+                userType === "ong"
+                  ? "bg-secondary text-secondary-foreground shadow-md"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Sou uma ONG
@@ -53,62 +159,46 @@ export function LoginPage() {
           </div>
 
           <div className="space-y-4">
-            <button
-              onClick={handleGoogleLogin}
-              className="w-full py-4 px-6 bg-white border-2 border-border rounded-2xl font-semibold hover:border-primary transition-all flex items-center justify-center gap-3 group"
-            >
-              <svg className="w-6 h-6" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
-              Entrar com Google
-            </button>
-
-            <div className="text-center text-sm text-muted-foreground">
-              Ao continuar, você concorda com nossos{" "}
-              <a href="#" className="text-primary hover:underline">
-                Termos de Uso
-              </a>{" "}
-              e{" "}
-              <a href="#" className="text-primary hover:underline">
-                Política de Privacidade
-              </a>
+            {/* Botão Google — sempre visível; spinner sobreposto durante loading */}
+            <div className="relative">
+              <div
+                id="google-btn-container"
+                className={`w-full flex justify-center transition-opacity ${loading ? "opacity-40 pointer-events-none" : ""}`}
+              />
+              {loading && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              )}
             </div>
+
+            {error && (
+              <div className="text-center text-sm text-destructive bg-destructive/10 p-3 rounded-xl leading-relaxed">
+                {error}
+              </div>
+            )}
+
           </div>
 
-          <div className="mt-8 p-6 bg-adopter-bg rounded-2xl">
-            {userType === 'adopter' ? (
-              <div>
+          <div className="mt-8 p-5 bg-adopter-bg rounded-2xl">
+            {userType === "adopter" ? (
+              <>
                 <h3 className="font-semibold mb-2 text-sm">Como Adotante:</h3>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>✓ Encontre pets compatíveis com você</li>
-                  <li>✓ Sistema de Match personalizado</li>
+                  <li>✓ Sistema de Match com IA personalizado</li>
                   <li>✓ Contato direto com ONGs</li>
                 </ul>
-              </div>
+              </>
             ) : (
-              <div>
+              <>
                 <h3 className="font-semibold mb-2 text-sm">Como ONG:</h3>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>✓ Cadastre e gerencie animais</li>
                   <li>✓ Acompanhe interessados</li>
                   <li>✓ Facilitamos a adoção responsável</li>
                 </ul>
-              </div>
+              </>
             )}
           </div>
         </div>

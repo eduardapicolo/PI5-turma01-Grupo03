@@ -1,59 +1,63 @@
 import { createBrowserRouter } from "react-router";
-import { HomePage } from "./pages/HomePage";
-import { LoginPage } from "./pages/LoginPage";
-import { QuestionPage } from "./pages/QuestionPage";
-import { SwipePage } from "./pages/SwipePage";
-import { PetDetailsPage } from "./pages/PetDetailsPage";
-import { MatchesPage } from "./pages/MatchesPage";
-import { ProfilePage } from "./pages/ProfilePage";
-import { OngDashboard } from "./pages/OngDashboard";
-import { OngAnimalsPage } from "./pages/OngAnimalsPage";
-import { OngAddPetPage } from "./pages/OngAddPetPage";
+import { HomePage }        from "./pages/HomePage";
+import { LoginPage }       from "./pages/LoginPage";
+import { QuestionPage }    from "./pages/QuestionPage";
+import { SwipePage }       from "./pages/SwipePage";
+import { PetDetailsPage }  from "./pages/PetDetailsPage";
+import { MatchesPage }     from "./pages/MatchesPage";
+import { ProfilePage }     from "./pages/ProfilePage";
+import { OngDashboard }    from "./pages/OngDashboard";
+import { OngAnimalsPage }  from "./pages/OngAnimalsPage";
+import { OngAddPetPage }   from "./pages/OngAddPetPage";
 import { OngInterestsPage } from "./pages/OngInterestsPage";
+import { OngEditPetPage }  from "./pages/OngEditPetPage";
+import { ProtectedRoute }  from "./components/ProtectedRoute";
 
 export const router = createBrowserRouter([
-  {
-    path: "/",
-    Component: HomePage,
-  },
-  {
-    path: "/login",
-    Component: LoginPage,
-  },
+  { path: "/",      Component: HomePage  },
+  { path: "/login", Component: LoginPage },
+
+  // Rotas protegidas — adotante
   {
     path: "/questionario",
-    Component: QuestionPage,
-  },
-  {
-    path: "/swipe",
-    Component: SwipePage,
-  },
-  {
-    path: "/pet/:id",
-    Component: PetDetailsPage,
+    element: <ProtectedRoute><QuestionPage /></ProtectedRoute>,
   },
   {
     path: "/matches",
-    Component: MatchesPage,
+    element: <ProtectedRoute><MatchesPage /></ProtectedRoute>,
+  },
+  {
+    path: "/swipe",
+    element: <ProtectedRoute><SwipePage /></ProtectedRoute>,
+  },
+  {
+    path: "/pet/:id",
+    element: <ProtectedRoute><PetDetailsPage /></ProtectedRoute>,
   },
   {
     path: "/perfil",
-    Component: ProfilePage,
+    element: <ProtectedRoute><ProfilePage /></ProtectedRoute>,
   },
+
+  // Rotas protegidas — ONG
   {
     path: "/ong",
-    Component: OngDashboard,
+    element: <ProtectedRoute requireRole="ong"><OngDashboard /></ProtectedRoute>,
   },
   {
     path: "/ong/animais",
-    Component: OngAnimalsPage,
+    element: <ProtectedRoute requireRole="ong"><OngAnimalsPage /></ProtectedRoute>,
   },
   {
     path: "/ong/adicionar",
-    Component: OngAddPetPage,
+    element: <ProtectedRoute requireRole="ong"><OngAddPetPage /></ProtectedRoute>,
+  },
+  {
+    path: "/ong/editar/:id",
+    element: <ProtectedRoute requireRole="ong"><OngEditPetPage /></ProtectedRoute>,
   },
   {
     path: "/ong/interessados",
-    Component: OngInterestsPage,
+    element: <ProtectedRoute requireRole="ong"><OngInterestsPage /></ProtectedRoute>,
   },
 ]);
