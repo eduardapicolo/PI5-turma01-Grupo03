@@ -1,0 +1,30 @@
+# Dependências
+node_modules/
+backend/node_modules/
+
+# Build
+dist/
+
+# Variáveis de ambiente (NUNCA subir — configure no Railway/Vercel)
+.env
+backend/.env
+backend/fastapi_app/.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Lock files alternativos (use pnpm-lock.yaml como fonte da verdade)
+package-lock.json
