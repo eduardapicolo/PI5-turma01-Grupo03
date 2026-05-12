@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { Header } from "../components/Header";
-import { PawPrint, Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { useAuth, QuestionnaireAnswers } from "../context/AuthContext";
 import { Link } from "react-router";
 
@@ -27,7 +27,7 @@ async function fetchRecomendacoes(answers: QuestionnaireAnswers, token: string) 
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ ...answers, topN: 20 }),
+    body: JSON.stringify({ ...answers, topN: 5 }),
   });
   if (!res.ok) return null;
   const data = await res.json();
@@ -49,8 +49,7 @@ export function LoginPage() {
   });
 
   useEffect(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-      "987417699236-lnfnbap1sdtlltjm0dqdbmrgr7mu2aba.apps.googleusercontent.com";
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
     const init = () => {
       window.google?.accounts.id.initialize({
@@ -61,7 +60,7 @@ export function LoginPage() {
       if (btn) {
         btn.innerHTML = "";
         window.google?.accounts.id.renderButton(btn, {
-          theme: "outline", size: "large", width: "100%",
+          theme: "outline", size: "large", width: 360,
           text: "signin_with", logo_alignment: "left",
         });
       }
@@ -120,9 +119,7 @@ export function LoginPage() {
       <div className="container mx-auto px-6 py-20 flex items-center justify-center">
         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-full">
           <div className="text-center mb-8">
-            <div className="bg-primary text-primary-foreground w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <PawPrint className="w-8 h-8" />
-            </div>
+            <img src="/LOGO_PIV.png" alt="Aumigos" className="w-16 h-16 rounded-2xl mx-auto mb-4" />
             <Link
               to="/"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-muted hover:bg-muted/80 text-foreground font-medium text-sm transition-colors mb-4"
@@ -180,27 +177,6 @@ export function LoginPage() {
 
           </div>
 
-          <div className="mt-8 p-5 bg-adopter-bg rounded-2xl">
-            {userType === "adopter" ? (
-              <>
-                <h3 className="font-semibold mb-2 text-sm">Como Adotante:</h3>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>✓ Encontre pets compatíveis com você</li>
-                  <li>✓ Sistema de Match com IA personalizado</li>
-                  <li>✓ Contato direto com ONGs</li>
-                </ul>
-              </>
-            ) : (
-              <>
-                <h3 className="font-semibold mb-2 text-sm">Como ONG:</h3>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>✓ Cadastre e gerencie animais</li>
-                  <li>✓ Acompanhe interessados</li>
-                  <li>✓ Facilitamos a adoção responsável</li>
-                </ul>
-              </>
-            )}
-          </div>
         </div>
       </div>
     </div>

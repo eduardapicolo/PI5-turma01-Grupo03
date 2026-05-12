@@ -1,4 +1,4 @@
-import { Heart, LogOut, PawPrint, User, Compass } from "lucide-react";
+import { Heart, LogOut, User, Compass } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 
@@ -27,10 +27,8 @@ export function Header({ variant = 'public', showNav = true }: HeaderProps) {
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-primary text-primary-foreground p-2 rounded-2xl">
-              <PawPrint className="w-6 h-6" />
-            </div>
-            <span className="text-xl font-bold text-foreground">PetMatch</span>
+            <img src="/LOGO_PIV.png" alt="Aumigos" className="w-10 h-10 rounded-2xl" />
+            <span className="text-xl font-bold text-foreground">Aumigos</span>
           </div>
 
           {showNav && variant === 'public' && (

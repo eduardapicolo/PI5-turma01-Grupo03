@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "motion/react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
-const BATCH = 20;
+const BATCH = 5;
 
 interface RecomendacaoPet {
   pet: {
@@ -28,7 +28,6 @@ interface RecomendacaoPet {
   };
   score: number;
   distancia: number;
-  justificativa: string;
 }
 
 function getPetImg(pet: RecomendacaoPet["pet"]): string | null {
@@ -118,7 +117,7 @@ export function MatchesPage() {
     setCurrentIdx((i) => {
       const next = i + 1;
       // Perto do fim — carrega mais
-      if (!allLoaded && !loadingMore && next >= recs.length - 3) {
+      if (!allLoaded && !loadingMore && next >= recs.length - 1) {
         loadMore();
       }
       return next;
@@ -242,14 +241,6 @@ export function MatchesPage() {
       <Header variant="adopter" />
 
       <div className="container mx-auto px-4 py-6 flex flex-col items-center">
-        {/* Contador */}
-        <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground">{currentIdx + 1}</span>
-          <span>/</span>
-          <span>{recs.length}{!allLoaded ? "+" : ""}</span>
-          <span>matches</span>
-          {loadingMore && <Loader2 className="w-3.5 h-3.5 animate-spin ml-1" />}
-        </div>
 
         {/* Card */}
         <div className="w-full max-w-sm">

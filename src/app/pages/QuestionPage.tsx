@@ -4,18 +4,21 @@ import { ArrowRight, ArrowLeft, Check } from "lucide-react";
 import { Header } from "../components/Header";
 
 // Mapeamento das respostas para os valores esperados pelo backend
-const CUIDADOS_MAP: Record<string, string> = {
-  "Sim, quero castrado, vacinado e vermifugado": "completo",
-  "Posso cuidar depois":                          "depois",
-  "Tanto faz":                                    "tanto_faz",
-};
+const CUIDADOS_OPTIONS = ["Castrado", "Vacinado", "Vermifugado"];
 
 const SOCIAVEL_MAP: Record<string, string> = {
   "Sim": "sim",
   "Não": "nao",
 };
 
-const questions = [
+interface Question {
+  id: string;
+  question: string;
+  options: string[];
+  multiple?: boolean;
+}
+
+const questions: Question[] = [
   {
     id: "tipo",
     question: "Você prefere qual tipo de pet?",
@@ -38,12 +41,9 @@ const questions = [
   },
   {
     id: "cuidados",
-    question: "Você prefere um pet com saúde em dia?",
-    options: [
-      "Sim, quero castrado, vacinado e vermifugado",
-      "Posso cuidar depois",
-      "Tanto faz",
-    ],
+    question: "Quais cuidados veterinários você prefere que o pet já tenha?",
+    options: CUIDADOS_OPTIONS,
+    multiple: true,
   },
   {
     id: "sociavel",
@@ -68,15 +68,25 @@ function extractValue(option: string): string {
 export function QuestionPage() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [multiAnswers, setMultiAnswers] = useState<Record<string, string[]>>({});
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const q = questions[currentQuestion];
-  const currentAnswer = answers[q.id];
+  const currentAnswer = q.multiple ? multiAnswers[q.id] : answers[q.id];
+  const hasAnswer = q.multiple ? (multiAnswers[q.id]?.length ?? 0) > 0 : !!answers[q.id];
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
   const handleAnswer = (option: string) => {
-    setAnswers({ ...answers, [q.id]: option });
+    if (q.multiple) {
+      setMultiAnswers((prev) => {
+        const current = prev[q.id] ?? [];
+        const exists = current.includes(option);
+        return { ...prev, [q.id]: exists ? current.filter((o) => o !== option) : [...current, option] };
+      });
+    } else {
+      setAnswers({ ...answers, [q.id]: option });
+    }
   };
 
   const handleNext = async () => {
@@ -92,7 +102,8 @@ export function QuestionPage() {
       const porteRaw   = answers.porte;                // "Pequeno" | "Médio" | "Grande"
       const idadeRaw   = extractValue(answers.idade);  // "Filhote" | "Adulto" | "Sênior"
       const localRaw   = answers.local;
-      const cuidadosRaw = CUIDADOS_MAP[answers.cuidados] || "tanto_faz";
+      const cuidadosList = (multiAnswers.cuidados ?? []).map((c) => c.toLowerCase());
+      const cuidadosRaw = cuidadosList.join(", ");
       const socialRaw  = SOCIAVEL_MAP[answers.sociavel]  || "nao";
       const sexoRaw    = answers.sexo;
 
@@ -113,7 +124,7 @@ export function QuestionPage() {
           cuidados: cuidadosRaw,
           sociavel: socialRaw,
           sexo:     sexoRaw,
-          topN:     10,
+          topN:     5,
         }),
       });
 
@@ -165,27 +176,35 @@ export function QuestionPage() {
               {q.question}
             </h2>
 
+            {q.multiple && (
+              <p className="text-sm text-muted-foreground mb-4">Selecione quantas quiser (ou nenhuma se não tiver preferência)</p>
+            )}
             <div className="space-y-4">
-              {q.options.map((option) => (
-                <button
-                  key={option}
-                  onClick={() => handleAnswer(option)}
-                  className={`w-full p-5 rounded-2xl border-2 text-left transition-all group hover:scale-[1.02] ${
-                    currentAnswer === option
-                      ? "border-primary bg-primary/5 shadow-md"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-lg">{option}</span>
-                    {currentAnswer === option && (
-                      <div className="bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center">
-                        <Check className="w-5 h-5" />
-                      </div>
-                    )}
-                  </div>
-                </button>
-              ))}
+              {q.options.map((option) => {
+                const isSelected = q.multiple
+                  ? (multiAnswers[q.id] ?? []).includes(option)
+                  : currentAnswer === option;
+                return (
+                  <button
+                    key={option}
+                    onClick={() => handleAnswer(option)}
+                    className={`w-full p-5 rounded-2xl border-2 text-left transition-all group hover:scale-[1.02] ${
+                      isSelected
+                        ? "border-primary bg-primary/5 shadow-md"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-lg">{option}</span>
+                      {isSelected && (
+                        <div className="bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center">
+                          <Check className="w-5 h-5" />
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -201,7 +220,7 @@ export function QuestionPage() {
             </button>
             <button
               onClick={handleNext}
-              disabled={!currentAnswer || isLoading}
+              disabled={(!hasAnswer && !q.multiple) || isLoading}
               className="flex-1 px-6 py-4 bg-primary text-primary-foreground rounded-2xl font-semibold hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
             >
               {isLoading

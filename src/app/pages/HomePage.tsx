@@ -67,33 +67,6 @@ export function HomePage() {
         </div>
       </section>
 
-      <footer className="bg-foreground text-white py-12">
-        <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-3 gap-8">
-            <div>
-              <h4 className="font-semibold mb-4">PetMatch</h4>
-              <p className="text-sm text-gray-400">Conectando pets e pessoas através da tecnologia e amor.</p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Links Úteis</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link to="/login" className="hover:text-white transition-colors">Para ONGs</Link></li>
-                <li><a href="#" className="hover:text-white transition-colors">Sobre Nós</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Política de Privacidade</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Termos de Uso</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
-            <p>&copy; 2026 PetMatch. Todos os direitos reservados.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
