@@ -15,14 +15,11 @@ const likeRoutes           = require('./routes/likes');
 
 const app = express();
 
-// ── Conexão com banco ──
 connectDB();
 
-// ── Garante pasta de uploads ──
 const uploadsDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-// ── Middlewares globais ──
 app.use(cors({
   origin:      process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
@@ -32,21 +29,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// Servir imagens enviadas
 app.use('/uploads', express.static(uploadsDir));
 
-// ── Rotas ──
 app.use('/api/auth',         authRoutes);
 app.use('/api/pets',         petRoutes);
 app.use('/api/recomendacao', recommendationRoutes);
 app.use('/api/likes',        likeRoutes);
 
-// ── Health check ──
 app.get('/api/health', (req, res) =>
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 );
 
-// ── Documentação de endpoints ──
 app.get('/api/docs', (req, res) => {
   res.json({
     version: '1.0.0',
@@ -74,7 +67,6 @@ Retorna: [ { pet, score, distancia, justificativa } ]`,
   });
 });
 
-// ── Handler de erros ──
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;

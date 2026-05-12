@@ -1,23 +1,15 @@
-const { gerarJustificativa } = require('../services/recommendationService');
 const petRepository           = require('../repositories/petRepository');
 const userRepository          = require('../repositories/userRepository');
 const Like                    = require('../models/Like');
 
 const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
 
-/**
- * POST /api/recomendacao
- *
- * Body:
- *   tipo, porte, idade, local, cuidados, sociavel, sexo — respostas do questionário
- *   topN  (opcional, default 20)
- *   skip  (opcional, default 0)
- */
+// POST /api/recomendacao
 const recomendar = async (req, res, next) => {
   try {
     const {
       tipo, porte, idade, local, cuidados, sociavel, sexo,
-      topN = 20, skip = 0,
+      topN = 5, skip = 0,
     } = req.body;
 
     if (!tipo || !['Cachorro', 'Gato'].includes(tipo))
@@ -28,8 +20,8 @@ const recomendar = async (req, res, next) => {
       return res.status(400).json({ error: 'idade inválida' });
     if (!local || !['Apartamento', 'Casa com quintal'].includes(local))
       return res.status(400).json({ error: 'local inválido' });
-    if (!cuidados || !['completo', 'depois', 'tanto_faz'].includes(cuidados))
-      return res.status(400).json({ error: 'cuidados inválido' });
+    if (cuidados !== undefined && typeof cuidados !== 'string')
+      return res.status(400).json({ error: 'cuidados deve ser uma string' });
     if (!sociavel || !['sim', 'nao'].includes(sociavel))
       return res.status(400).json({ error: 'sociavel deve ser "sim" ou "nao"' });
     if (!sexo || !['Macho', 'Fêmea', 'Ambos'].includes(sexo))
@@ -37,7 +29,6 @@ const recomendar = async (req, res, next) => {
 
     const respostas = { tipo, porte, idade, local, cuidados, sociavel, sexo };
 
-    // Busca pets curtidos: vetores para blending + IDs para exclusão
     let liked_vetores = [];
     let excluded_ids  = [];
     if (req.user) {
@@ -54,11 +45,10 @@ const recomendar = async (req, res, next) => {
       }
     }
 
-    // Chama o microserviço FastAPI
     const fastapiRes = await fetch(`${FASTAPI_URL}/recommend`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ respostas, liked_vetores, excluded_ids, top_n: +topN, skip: +skip }),
+      body: JSON.stringify({ respostas, vetores_curtidos: liked_vetores, ids_excluidos: excluded_ids, top_n: +topN, pular: +skip }),
     });
 
     if (!fastapiRes.ok) {
@@ -66,9 +56,8 @@ const recomendar = async (req, res, next) => {
       throw new Error(err.detail || `FastAPI respondeu ${fastapiRes.status}`);
     }
 
-    const ranked = await fastapiRes.json(); // [{pet_id, score, distancia}]
+    const ranked = await fastapiRes.json();
 
-    // Busca detalhes completos dos pets
     const petIds = ranked.map((r) => r.pet_id);
     const pets   = await petRepository.findByIds(petIds);
     const petMap = Object.fromEntries(pets.map((p) => [p._id.toString(), p]));
@@ -97,11 +86,9 @@ const recomendar = async (req, res, next) => {
           },
           score,
           distancia,
-          justificativa: gerarJustificativa(pet, respostas),
         };
       });
 
-    // Persiste respostas no perfil do usuário
     if (req.user) {
       userRepository
         .updateById(req.user._id, { lastQuestionnaireAnswers: respostas })

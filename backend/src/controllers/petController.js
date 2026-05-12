@@ -2,10 +2,7 @@ const petRepository = require('../repositories/petRepository');
 
 const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
 
-/**
- * Calcula o vetor PCA de um pet via FastAPI e salva no banco.
- * Chamado automaticamente após create/update.
- */
+// Calcula vetor PCA via FastAPI e salva no banco
 async function recalcularVetor(pet) {
   try {
     const res = await fetch(`${FASTAPI_URL}/vectorize`, {
@@ -23,11 +20,7 @@ async function recalcularVetor(pet) {
   }
 }
 
-/**
- * GET /api/pets
- * Lista pets com filtros opcionais (tipo_animal, porte, disponibilidade, ong).
- * Paginação via ?page=1&limit=20
- */
+// GET /api/pets
 const listPets = async (req, res, next) => {
   try {
     const { tipo_animal, porte, disponibilidade, ong, page = 1, limit = 20 } = req.query;
@@ -56,9 +49,7 @@ const listPets = async (req, res, next) => {
   }
 };
 
-/**
- * GET /api/pets/:id
- */
+// GET /api/pets/:id
 const getPet = async (req, res, next) => {
   try {
     const pet = await petRepository.findById(req.params.id);
@@ -69,16 +60,11 @@ const getPet = async (req, res, next) => {
   }
 };
 
-/**
- * POST /api/pets
- * Cria um pet (somente ONG/admin).
- * Recalcula o vetor PCA automaticamente.
- */
+// POST /api/pets
 const createPet = async (req, res, next) => {
   try {
     const data = { ...req.body, ong: req.user._id };
 
-    // Processa upload de foto se houver
     if (req.file) {
       data.imagem_principal = `/uploads/${req.file.filename}`;
       data.fotos = [data.imagem_principal];
@@ -86,7 +72,6 @@ const createPet = async (req, res, next) => {
 
     const pet = await petRepository.create(data);
 
-    // Recalcula vetor em background (não bloqueia resposta)
     recalcularVetor(pet).catch(() => {});
 
     res.status(201).json({ data: pet });
@@ -95,17 +80,12 @@ const createPet = async (req, res, next) => {
   }
 };
 
-/**
- * PUT /api/pets/:id
- * Atualiza um pet (somente ONG dona ou admin).
- * Recalcula o vetor PCA automaticamente.
- */
+// PUT /api/pets/:id
 const updatePet = async (req, res, next) => {
   try {
     const pet = await petRepository.findById(req.params.id);
     if (!pet) return res.status(404).json({ error: 'Pet não encontrado' });
 
-    // Verifica propriedade
     const isOwner = pet.ong._id.toString() === req.user._id.toString();
     if (!isOwner && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Sem permissão para editar este pet' });
@@ -118,7 +98,6 @@ const updatePet = async (req, res, next) => {
 
     const updated = await petRepository.updateById(req.params.id, updates);
 
-    // Recalcula vetor PCA após atualização
     recalcularVetor(updated).catch(() => {});
 
     res.json({ data: updated });
@@ -127,10 +106,7 @@ const updatePet = async (req, res, next) => {
   }
 };
 
-/**
- * DELETE /api/pets/:id
- * Exclui um pet (somente ONG dona ou admin).
- */
+// DELETE /api/pets/:id
 const deletePet = async (req, res, next) => {
   try {
     const pet = await petRepository.findById(req.params.id);
@@ -148,10 +124,7 @@ const deletePet = async (req, res, next) => {
   }
 };
 
-/**
- * GET /api/pets/ong/meus
- * Lista todos os pets da ONG autenticada.
- */
+// GET /api/pets/ong/meus
 const myPets = async (req, res, next) => {
   try {
     const { disponibilidade } = req.query;
@@ -163,10 +136,7 @@ const myPets = async (req, res, next) => {
   }
 };
 
-/**
- * POST /api/pets/:id/recalcular-vetor
- * Força recálculo do vetor PCA (admin ou ONG dona).
- */
+// POST /api/pets/:id/recalcular-vetor
 const recalcularVetorManual = async (req, res, next) => {
   try {
     const pet = await petRepository.findById(req.params.id);

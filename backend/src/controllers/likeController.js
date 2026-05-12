@@ -1,10 +1,6 @@
 const Like = require('../models/Like');
 
-/**
- * POST /api/likes/:petId
- * Cria ou remove o like do usuário autenticado para um pet.
- * Retorna { liked: boolean }
- */
+// POST /api/likes/:petId — toggle like
 const toggleLike = async (req, res, next) => {
   try {
     const { petId } = req.params;
@@ -24,11 +20,7 @@ const toggleLike = async (req, res, next) => {
   }
 };
 
-/**
- * GET /api/likes
- * Retorna os IDs dos pets curtidos.
- * Com ?populate=1 também retorna os dados básicos de cada pet.
- */
+// GET /api/likes
 const getLikes = async (req, res, next) => {
   try {
     let query = Like.find({ user: req.user._id }).sort({ createdAt: -1 });
