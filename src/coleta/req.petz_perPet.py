@@ -8,8 +8,8 @@ url_lista = "https://apis.petz.digital/adote/v1/pets"
 
 headers = {
     "accept": "application/json, text/plain, */*",
-    "access_token": "2xkgF3VdpH2nNHljnjUXaEswH5SH7zj2",
-    "client_id": "c3398ff4-a8d8-4590-b6e0-d1a56de687dd",
+    "access_token": os.getenv("PETZ_ACCESS_TOKEN", ""),
+    "client_id": os.getenv("PETZ_CLIENT_ID", ""),
     "origin": "https://www.adotepetz.com.br",
     "referer": "https://www.adotepetz.com.br/",
     "user-agent": "Mozilla/5.0"
