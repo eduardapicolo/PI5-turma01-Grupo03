@@ -2,15 +2,11 @@ import json
 import csv
 from datetime import datetime, date
 
-# esse script transforma um json detalhado da petz em arquivos mais simples
-# ele gera um json limpo e tambem um csv para analise
 
-# abre o arquivo json bruto coletado antes
 with open("pets_petz_detalhado.json", "r", encoding="utf-8") as f:
     dados = json.load(f)
 
 def calcular_idade(data_nascimento):
-    # calcula idade aproximada do pet usando a data de nascimento
     if not data_nascimento:
         return ""
 
@@ -32,31 +28,24 @@ def calcular_idade(data_nascimento):
         return f"{anos} ano(s) e {meses} mes(es)"
     return f"{meses} mes(es)"
 
-# guarda a data e hora em que o processamento foi feito
 acesso_em = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-# lista final que vai receber os pets limpos
 resultado = []
 
 for pet in dados:
-    # alguns jsons vem dentro de data, outros ja vem direto no objeto
     item = pet.get("data", pet)
 
-    # separa partes internas do json para facilitar leitura
     unidade = item.get("unit", {})
     cidade = unidade.get("city", {})
     ong = item.get("ngo", {})
     imagem = item.get("image", {})
     raca = item.get("breed", {})
 
-    # ids usados para montar o link de adocao
     moura_id = item.get("mouraId", "")
     documento_unidade = unidade.get("document", "")
 
-    # link publico para a pagina de adocao do pet
     link = f"https://www.adotepetz.com.br/quero-adotar?idPet={moura_id}&cnpjUnidade={documento_unidade}"
 
-    # monta um pet em formato simples
     novo_pet = {
         "Id": moura_id,
         "Nome": item.get("name", ""),
@@ -77,14 +66,11 @@ for pet in dados:
         "Acesso_em": acesso_em
     }
 
-    # adiciona o pet limpo na lista final
     resultado.append(novo_pet)
 
-# salva os dados limpos em json
 with open("Petz.json", "w", encoding="utf-8") as f:
     json.dump(resultado, f, ensure_ascii=False, indent=2)
 
-# colunas usadas no csv final
 campos = [
     "Id",
     "Nome",
@@ -105,7 +91,6 @@ campos = [
     "Acesso_em"
 ]
 
-# salva os mesmos dados em csv
 with open("Petz.csv", "w", encoding="utf-8-sig", newline="") as f:
     writer = csv.DictWriter(f, fieldnames=campos)
     writer.writeheader()

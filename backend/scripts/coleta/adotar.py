@@ -6,10 +6,6 @@ import re
 import time
 from urllib.parse import urljoin
 
-# esse script faz coleta de pets do site adotar.com.br
-# ele nao roda junto com a api
-# ele serve para gerar um csv com dados que podem ser analisados ou importados depois
-
 BASE_URL = "https://adotar.com.br"
 URL_BASE_LISTAGEM = "https://adotar.com.br/adocao-de-animais"
 HEADERS = {
@@ -19,23 +15,18 @@ ARQUIVO_CSV = "animais_adotar.csv"
 
 
 def limpar_texto(txt):
-    # limpa espacos repetidos de um texto vindo do html
     if not txt:
         return ""
     return re.sub(r"\s+", " ", txt).strip()
 
 
 def get_soup(url):
-    # baixa uma pagina html e transforma em objeto beautifulsoup
-    # isso facilita procurar tags dentro da pagina
     r = requests.get(url, headers=HEADERS, timeout=30)
     r.raise_for_status()
     return BeautifulSoup(r.text, "html.parser")
 
 
 def extrair_json_ld(soup):
-    # procura dados estruturados em json dentro da pagina
-    # muitos sites colocam informacoes do animal nesse formato
     scripts = soup.find_all("script", {"type": "application/ld+json"})
     for script in scripts:
         conteudo = script.string or script.get_text(strip=True)
@@ -51,8 +42,6 @@ def extrair_json_ld(soup):
 
 
 def props_para_dict(additional_property):
-    # transforma a lista additionalproperty em um dicionario simples
-    # isso facilita buscar campos pelo nome
     dados = {}
     if not isinstance(additional_property, list):
         return dados
@@ -66,7 +55,6 @@ def props_para_dict(additional_property):
 
 
 def extrair_historia(soup):
-    # procura a parte da pagina que fala a historia do animal
     h3s = soup.find_all("h3")
     for h3 in h3s:
         texto = limpar_texto(h3.get_text(" ", strip=True)).lower()
@@ -79,7 +67,6 @@ def extrair_historia(soup):
 
 
 def extrair_badges_por_rotulo(soup, rotulo):
-    # procura marcadores visuais como pelagem, cuidados e sociabilidade
     fortes = soup.find_all("strong")
     for strong in fortes:
         texto = limpar_texto(strong.get_text(" ", strip=True)).lower()
@@ -94,7 +81,6 @@ def extrair_badges_por_rotulo(soup, rotulo):
 
 
 def extrair_contato(soup):
-    # tenta extrair dados de contato da pagina do animal
     contato = {
         "contato_nome": "",
         "telefone": "",
@@ -122,8 +108,6 @@ def extrair_contato(soup):
 
 
 def extrair_campos_visuais(soup):
-    # pega informacoes que aparecem diretamente no html da pagina
-    # exemplo: titulo, sexo, porte, idade, raca e imagem
     dados = {
         "titulo": "",
         "sexo": "",
@@ -170,7 +154,6 @@ def extrair_campos_visuais(soup):
 
 
 def extrair_detalhes_animal(url):
-    # junta todas as funcoes de extracao para montar um registro completo do animal
     soup = get_soup(url)
 
     visual = extrair_campos_visuais(soup)
@@ -213,7 +196,6 @@ def extrair_detalhes_animal(url):
 
 
 def extrair_links_animais_da_pagina(url):
-    # entra em uma pagina de listagem e pega os links dos animais
     soup = get_soup(url)
     links = []
 
@@ -236,7 +218,6 @@ def extrair_links_animais_da_pagina(url):
 
 
 def carregar_urls_existentes_csv(nome_arquivo):
-    # le o csv atual para nao salvar o mesmo animal duas vezes
     urls = set()
     try:
         with open(nome_arquivo, "r", encoding="utf-8-sig", newline="") as f:
@@ -250,8 +231,6 @@ def carregar_urls_existentes_csv(nome_arquivo):
 
 
 def salvar_incremental_csv(nome_arquivo, dados, cabecalho_escrito):
-    # salva um animal por vez no csv
-    # isso evita perder tudo se o script parar no meio
     colunas = [
         "url", "nome", "titulo", "tipo_animal", "sexo", "porte", "idade",
         "raca", "pelagem", "localizacao", "codigo", "descricao", "historia",
@@ -269,16 +248,12 @@ def salvar_incremental_csv(nome_arquivo, dados, cabecalho_escrito):
 
 
 def montar_url_pagina(numero_pagina):
-    # monta a url da pagina de listagem
-    # pagina 1 nao tem parametro, paginas seguintes usam ?p=
     if numero_pagina == 1:
         return URL_BASE_LISTAGEM
     return f"{URL_BASE_LISTAGEM}?p={numero_pagina}"
 
 
 def main():
-    # funcao principal do script de coleta
-    # ela percorre paginas, coleta animais e salva no csv
     urls_existentes = carregar_urls_existentes_csv(ARQUIVO_CSV)
     cabecalho_escrito = len(urls_existentes) > 0
 

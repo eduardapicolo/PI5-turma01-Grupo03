@@ -5,7 +5,7 @@ backend/node_modules/
 # Build
 dist/
 
-# Variáveis de ambiente (NUNCA subir — configure no Railway/Vercel)
+# Variáveis
 .env
 backend/.env
 backend/fastapi_app/.env
@@ -30,5 +30,5 @@ npm-debug.log*
 Thumbs.db
 ~$*.docx
 
-# Lock files alternativos (use pnpm-lock.yaml como fonte da verdade)
+# Lock files
 package-lock.json

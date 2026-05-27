@@ -4,14 +4,9 @@ import time
 import os
 from datetime import datetime, date
 
-# esse script coleta pets da api da petz e salva em csv
-# ele e auxiliar e nao roda junto com o servidor
-
-# url da api que lista pets disponiveis na petz
 url_lista = "https://apis.petz.digital/adote/v1/pets"
 
-# headers simulam uma chamada feita pelo navegador
-# access token e client id devem vir das variaveis de ambiente
+
 headers = {
     "accept": "application/json, text/plain, */*",
     "access_token": os.getenv("PETZ_ACCESS_TOKEN", ""),
@@ -21,10 +16,8 @@ headers = {
     "user-agent": "Mozilla/5.0"
 }
 
-# caminho do arquivo csv onde os pets serao salvos
 arquivo_csv = "PI5-turma01-Grupo03/data/Petz.csv"
 
-# colunas que serao gravadas no csv final
 campos = [
     "Id",
     "Nome",
@@ -46,7 +39,6 @@ campos = [
 ]
 
 def calcular_idade(data_nascimento):
-    # calcula idade aproximada usando a data de nascimento do pet
     if not data_nascimento:
         return ""
 
@@ -73,7 +65,6 @@ def calcular_idade(data_nascimento):
     return f"{meses} mes(es)"
 
 def ler_ids_existentes(nome_arquivo):
-    # le ids que ja estao no csv para evitar duplicidade
     ids_existentes = set()
 
     if not os.path.exists(nome_arquivo):
@@ -88,7 +79,6 @@ def ler_ids_existentes(nome_arquivo):
 
 
 def montar_pet(item):
-    # transforma o json da api da petz em um dicionario simples para o csv
     unidade = item.get("unit", {})
     cidade = unidade.get("city", {})
     ong = item.get("ngo", {})
@@ -122,19 +112,15 @@ def montar_pet(item):
     }
 
 
-# le o csv antes de coletar para saber o que ja foi salvo
 ids_existentes = ler_ids_existentes(arquivo_csv)
 
-# verifica se precisa escrever cabecalho no csv
 arquivo_existe = os.path.exists(arquivo_csv)
 arquivo_vazio = (not arquivo_existe) or os.path.getsize(arquivo_csv) == 0
 
-# conta quantos pets novos foram adicionados nessa execucao
 novos = 0
 
 with open(arquivo_csv, "a", encoding="utf-8-sig", newline="") as f:
 
-    # cria o escritor csv
     writer = csv.DictWriter(f, fieldnames=campos)
 
     if arquivo_vazio:
@@ -144,21 +130,17 @@ with open(arquivo_csv, "a", encoding="utf-8-sig", newline="") as f:
     limit = 12
 
     while True:
-        # monta parametros de paginacao da api
-        # page muda a pagina e limit define quantidade por pagina
 
         params = {
             "page": page,
             "limit": limit
         }
 
-        # chama a api de listagem
         r = requests.get(url_lista, headers=headers, params=params)
 
         if r.status_code != 200:
             break
 
-        # pega a lista de pets dentro da resposta json
         data = r.json()
         pets = data["data"]["pets"]
 
@@ -167,15 +149,12 @@ with open(arquivo_csv, "a", encoding="utf-8-sig", newline="") as f:
 
         for pet in pets:
 
-            # pega ids usados pela api da petz
             moura_id = str(pet["mouraId"])
             unit_document = pet["unit"]["document"]
 
             if moura_id in ids_existentes:
-                # pula pet que ja existe no csv
                 continue
 
-            # chama endpoint de detalhe para pegar mais dados de um pet
             url_detalhe = f"https://apis.petz.digital/adote/v1/pets/{moura_id}"
 
             params_detalhe = {
@@ -187,13 +166,11 @@ with open(arquivo_csv, "a", encoding="utf-8-sig", newline="") as f:
 
                 if r2.status_code == 200:
 
-                    # transforma resposta da api em linha de csv
                     detalhe = r2.json()
                     item = detalhe.get("data", detalhe)
 
                     novo_pet = montar_pet(item)
 
-                    # salva o pet no csv imediatamente
                     writer.writerow(novo_pet)
                     f.flush()
 
@@ -203,14 +180,11 @@ with open(arquivo_csv, "a", encoding="utf-8-sig", newline="") as f:
 
                     print(f"Novo pet adicionado: {moura_id}")
 
-                # pequena pausa para nao chamar a api rapido demais
                 time.sleep(0.2)
 
             except:
-                # se um pet der erro, o script continua com os proximos
                 pass
 
-        # vai para a proxima pagina
         page += 1
         time.sleep(0.3)
 
